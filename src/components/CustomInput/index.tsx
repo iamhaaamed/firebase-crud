@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useField } from "@formiz/core";
 import {
   FormControl,
@@ -14,6 +14,7 @@ export const CustomInput = (props: any) => {
     id,
     isValid,
     isSubmitted,
+    resetKey,
     setValue,
     value,
     ...otherProps
@@ -21,6 +22,10 @@ export const CustomInput = (props: any) => {
   const { label, type, required } = props;
   const [isTouched, setIsTouched] = React.useState(false);
   const showError = !isValid && (isTouched || isSubmitted);
+
+  useEffect(() => {
+    setIsTouched(false);
+  }, [resetKey]);
 
   return (
     <FormControl isInvalid={showError} isRequired={required}>
