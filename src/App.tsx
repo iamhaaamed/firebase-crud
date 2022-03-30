@@ -34,8 +34,6 @@ import { Formiz, useForm } from "@formiz/core";
 import { CustomSelect } from "./components/CustomSelect";
 
 function App() {
-  const formRef = useRef<any>();
-
   const toast = useToast();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -48,7 +46,6 @@ function App() {
   const myForm = useForm();
 
   const handleSubmit = (values: any) => {
-    console.log({ values });
     try {
       setIsLoading(true);
 
@@ -63,8 +60,7 @@ function App() {
         description: `Menu ${values?.id ? "updated" : "created"} successfully`,
         status: "success",
       });
-      myForm.reset();
-      formRef.current?.reset();
+      myForm.reset({ only: ["resetKey", "values"] });
     } catch (error) {
       console.log(error);
     } finally {
