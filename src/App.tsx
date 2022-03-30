@@ -1,8 +1,6 @@
 import {
   Button,
   Container,
-  Input,
-  Select,
   Spinner,
   Stack,
   useToast,
@@ -31,6 +29,9 @@ import { ref, push, onValue, set } from "firebase/database";
 
 import { database } from "./firebase";
 import { DeleteIcon, EditIcon } from "@chakra-ui/icons";
+import { CustomInput } from "./components/CustomInput";
+import { Formiz, useForm } from "@formiz/core";
+import { CustomSelect } from "./components/CustomSelect";
 
 function App() {
   const formRef = useRef<any>();
@@ -38,36 +39,31 @@ function App() {
   const toast = useToast();
 
   const [isLoading, setIsLoading] = useState(false);
-  const [form, setForm] = useState<any>(null);
 
   const [selectedIdForDelete, setSelectedIdForDelete] = useState();
 
   const { isOpen, onOpen, onClose } = useDisclosure();
   const cancelRef = useRef<any>();
 
-  const handlerChange = (event: { target: { name: any; value: any } }) => {
-    const { name, value } = event.target;
-    console.log({ name, value });
-    setForm((prevState: any) => ({ ...prevState, [name]: value }));
-  };
+  const myForm = useForm();
 
-  const handleSubmit = (event: { preventDefault: () => void }) => {
+  const handleSubmit = (values: any) => {
+    console.log({ values });
     try {
       setIsLoading(true);
-      event.preventDefault();
 
-      if (form.id) {
-        set(ref(database, "menus/" + form.id), form);
+      if (values?.id) {
+        set(ref(database, "menus/" + values.id), values);
       } else {
-        push(ref(database, "menus/"), form);
+        push(ref(database, "menus/"), values);
       }
 
       toast({
         title: "Success",
-        description: `Menu ${form.id ? "updated" : "created"} successfully`,
+        description: `Menu ${values?.id ? "updated" : "created"} successfully`,
         status: "success",
       });
-      setForm(null);
+      myForm.reset();
       formRef.current?.reset();
     } catch (error) {
       console.log(error);
@@ -84,7 +80,6 @@ function App() {
     onValue(ref(database, "menus"), (snapshot) => {
       const newMenus: SetStateAction<any[]> = [];
       snapshot.forEach((childSnapshot) => {
-        console.log({ ...childSnapshot.val(), id: childSnapshot.key });
         newMenus.push({ ...childSnapshot.val(), id: childSnapshot.key });
       });
       setMenus(newMenus);
@@ -94,9 +89,7 @@ function App() {
 
   const handleDelete = async () => {
     try {
-      setIsLoading(true);
       await set(ref(database, "menus/" + selectedIdForDelete), null);
-      setIsLoading(false);
     } catch (error) {
       console.log(error);
     } finally {
@@ -112,7 +105,7 @@ function App() {
       onValue(starCountRef, (snapshot) => {
         const data = snapshot.val();
 
-        setForm({ ...data, id: snapshot.key });
+        myForm.setFieldsValues(data);
       });
       setIsLoading(false);
     } catch (error) {
@@ -153,54 +146,66 @@ function App() {
         </AlertDialogContent>
       </AlertDialog>
       <Container>
-        <form ref={formRef} onSubmit={handleSubmit}>
-          <Stack spacing={5} margin={10}>
-            <Select
-              name="category"
-              placeholder="Select option"
-              onChange={handlerChange}
-              value={form?.category}
-            >
-              <option value="cat1">Cat 1</option>
-              <option value="cat2">Cat 2</option>
-              <option value="cat3">Cat 3</option>
-            </Select>
-            <Input
-              name="name"
-              variant="filled"
-              placeholder="Name"
-              onChange={handlerChange}
-              value={form?.name}
-            />
-            <Input
-              name="price"
-              variant="filled"
-              placeholder="Price"
-              onChange={handlerChange}
-              type="number"
-              value={form?.price}
-            />
-            <Input
-              name="cost"
-              variant="filled"
-              placeholder="Cost"
-              onChange={handlerChange}
-              type="number"
-              value={form?.cost}
-            />
-            <Input
-              name="amount"
-              variant="filled"
-              placeholder="Amount"
-              onChange={handlerChange}
-              type="number"
-              value={form?.amount}
-            />
-            <Button type="submit" colorScheme="orange">
-              Save
-            </Button>
-          </Stack>
-        </form>
+        <Formiz
+          connect={myForm}
+          onValidSubmit={handleSubmit} // Handle submit only if the form is valid
+        >
+          <form noValidate onSubmit={myForm.submit}>
+            <Stack margin={10}>
+              <CustomSelect
+                required="Category is required"
+                id="category"
+                name="category"
+                placeholder="Select option"
+                label="Category"
+                options={[
+                  { label: "Cat 1", value: "cat1" },
+                  { label: "Cat 2", value: "cat2" },
+                  { label: "Cat 3", value: "cat3" },
+                ]}
+              />
+
+              <CustomInput
+                required="Name is required"
+                id="name"
+                name="name"
+                variant="filled"
+                label="Name"
+              />
+              <CustomInput
+                required="Price is required"
+                id="price"
+                name="price"
+                variant="filled"
+                label="Price"
+                type="number"
+              />
+              <CustomInput
+                required="Cost is required"
+                id="cost"
+                name="cost"
+                variant="filled"
+                label="Cost"
+                type="number"
+              />
+              <CustomInput
+                required="Amount is required"
+                id="amount"
+                name="amount"
+                variant="filled"
+                label="Amount"
+                type="number"
+              />
+              <Button
+                disabled={!myForm.isValid}
+                type="submit"
+                colorScheme="orange"
+              >
+                Save
+              </Button>
+            </Stack>
+          </form>
+        </Formiz>
       </Container>
       <Stack spacing={5} margin={10}>
         <TableContainer>
