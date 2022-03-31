@@ -32,13 +32,14 @@ import { DeleteIcon, EditIcon } from "@chakra-ui/icons";
 import { CustomInput } from "./components/CustomInput";
 import { Formiz, useForm } from "@formiz/core";
 import { CustomSelect } from "./components/CustomSelect";
+import { Menu } from "./types/Menu";
 
 function App() {
   const toast = useToast();
 
   const [isLoading, setIsLoading] = useState(false);
-
-  const [selectedIdForDelete, setSelectedIdForDelete] = useState();
+  const [menus, setMenus] = useState<Menu[]>([]);
+  const [selectedIdForDelete, setSelectedIdForDelete] = useState<string>();
 
   const { isOpen, onOpen, onClose } = useDisclosure();
   const cancelRef = useRef<any>();
@@ -68,13 +69,11 @@ function App() {
     }
   };
 
-  const [menus, setMenus] = useState<any[]>([]);
-
   useEffect(() => {
     setIsLoading(true);
 
     onValue(ref(database, "menus"), (snapshot) => {
-      const newMenus: SetStateAction<any[]> = [];
+      const newMenus: SetStateAction<Menu[]> = [];
       snapshot.forEach((childSnapshot) => {
         newMenus.push({ ...childSnapshot.val(), id: childSnapshot.key });
       });
